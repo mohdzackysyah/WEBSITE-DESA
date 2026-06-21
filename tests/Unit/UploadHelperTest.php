@@ -187,4 +187,25 @@ class UploadHelperTest extends TestCase
         @unlink($uploadedPath);
         @unlink($tempDocxPath);
     }
+
+    /**
+     * Test that file upload rejects spoofed magic bytes (e.g. a plain text file renamed to PDF)
+     */
+    public function test_file_upload_rejects_spoofed_magic_bytes()
+    {
+        // Create a plain text file pretending to be PDF
+        $tempFakePdf = tempnam(sys_get_temp_dir(), 'test_fake_pdf');
+        file_put_contents($tempFakePdf, "THIS IS JUST PLAIN TEXT, NOT A REAL PDF HEADER!");
+
+        $file = new UploadedFile($tempFakePdf, 'document.pdf', 'application/pdf', null, true);
+
+        // Upload
+        $result = UploadHelper::processUpload($file, ['pdf'], false, 'test-fake-pdf', true);
+
+        $this->assertFalse($result['success']);
+        $this->assertNotEmpty($result['errors']);
+
+        // Clean up
+        @unlink($tempFakePdf);
+    }
 }

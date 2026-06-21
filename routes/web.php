@@ -27,14 +27,14 @@ Route::get('/berita/{slug}', [PageController::class, 'detailBerita'])->name('ber
 Route::get('/galeri', [PageController::class, 'galeri'])->name('galeri');
 Route::get('/statistik', [PageController::class, 'statistik'])->name('statistik');
 Route::get('/kontak', [PageController::class, 'kontak'])->name('kontak');
-Route::post('/kontak', [PageController::class, 'kirimKontak'])->name('kontak.store');
+Route::post('/kontak', [PageController::class, 'kirimKontak'])->middleware('throttle:6,1')->name('kontak.store');
 
 // Layanan Surat & Pelacakan
 Route::get('/layanan', [SuratRequestController::class, 'showLayanan'])->name('layanan.index');
 Route::get('/layanan/lacak', [SuratRequestController::class, 'showLacak'])->name('layanan.lacak');
 Route::get('/layanan/check-nik', [SuratRequestController::class, 'checkNik'])->name('layanan.check-nik');
 Route::get('/layanan/form/{type}', [SuratRequestController::class, 'showForm'])->name('layanan.form');
-Route::post('/layanan/form/{type}', [SuratRequestController::class, 'store'])->name('layanan.form.store');
+Route::post('/layanan/form/{type}', [SuratRequestController::class, 'store'])->middleware('throttle:6,1')->name('layanan.form.store');
 Route::get('/layanan/download/{id}', [SuratRequestController::class, 'downloadFinal'])->name('layanan.download');
 Route::get('/layanan/preview/{id}', [SuratRequestController::class, 'previewFinal'])->name('layanan.preview');
 

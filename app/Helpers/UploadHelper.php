@@ -13,6 +13,13 @@ class UploadHelper
      */
     public static function processUpload(UploadedFile $file, $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'], $isPublic = false, $subDir = null, $optimize = true)
     {
+        if (!$file->isValid()) {
+            return [
+                'success' => false,
+                'errors' => ['Gagal mengunggah berkas: ' . $file->getErrorMessage()]
+            ];
+        }
+
         $originalName = $file->getClientOriginalName();
         $mimeType = $file->getMimeType();
         $fileSize = $file->getSize();
@@ -53,6 +60,46 @@ class UploadHelper
             if (!in_array($mimeType, $expectedMimes[$extension])) {
                 $isValid = false;
                 $errors[] = 'Tipe MIME berkas tidak sesuai dengan ekstensi file.';
+            }
+        }
+
+        // 4. Validasi Struktur Internal Berkas (Magic Bytes / Header)
+        if ($isValid) {
+            $tempPath = $file->getRealPath();
+            if ($extension === 'pdf') {
+                $handle = @fopen($tempPath, 'r');
+                if ($handle) {
+                    $firstBytes = fread($handle, 5);
+                    fclose($handle);
+                    if ($firstBytes !== '%PDF-') {
+                        $isValid = false;
+                        $errors[] = 'Struktur berkas PDF tidak valid (header rusak).';
+                    }
+                } else {
+                    $isValid = false;
+                    $errors[] = 'Gagal membaca isi berkas PDF.';
+                }
+            } elseif ($extension === 'docx') {
+                if (class_exists('ZipArchive')) {
+                    $zip = new \ZipArchive();
+                    if ($zip->open($tempPath) !== true) {
+                        $isValid = false;
+                        $errors[] = 'Berkas Word (DOCX) rusak atau tidak valid.';
+                    } else {
+                        $zip->close();
+                    }
+                }
+            } elseif ($extension === 'doc') {
+                $handle = @fopen($tempPath, 'r');
+                if ($handle) {
+                    $firstBytes = fread($handle, 8);
+                    fclose($handle);
+                    $oleSignature = "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1";
+                    if ($firstBytes !== $oleSignature) {
+                        $isValid = false;
+                        $errors[] = 'Berkas Word (DOC) rusak atau tidak valid.';
+                    }
+                }
             }
         }
 
