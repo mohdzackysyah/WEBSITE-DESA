@@ -288,8 +288,8 @@ class SuratRequestController extends Controller
             $surat->alasan_penolakan = $request->alasan_penolakan;
         } elseif ($status === 'selesai') {
             if ($request->hasFile('dokumen_final')) {
-                // Upload PDF bertanda tangan secara aman
-                $uploadResult = UploadHelper::processUpload($request->file('dokumen_final'), ['pdf']);
+                // Upload PDF bertanda tangan secara aman (tanpa kompresi untuk menjaga keaslian)
+                $uploadResult = UploadHelper::processUpload($request->file('dokumen_final'), ['pdf'], false, null, false);
                 if (!$uploadResult['success']) {
                     return back()->withErrors(['dokumen_final' => implode(' ', $uploadResult['errors'])]);
                 }

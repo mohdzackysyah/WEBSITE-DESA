@@ -11,7 +11,7 @@ class UploadHelper
     /**
      * Process an uploaded file securely with validation, compression, and EXIF stripping.
      */
-    public static function processUpload(UploadedFile $file, $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'], $isPublic = false, $subDir = null)
+    public static function processUpload(UploadedFile $file, $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'], $isPublic = false, $subDir = null, $optimize = true)
     {
         $originalName = $file->getClientOriginalName();
         $mimeType = $file->getMimeType();
@@ -36,16 +36,24 @@ class UploadHelper
 
         // 3. Validasi tipe MIME
         $expectedMimes = [
-            'pdf' => 'application/pdf',
-            'jpg' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            'webp' => 'image/webp'
+            'pdf' => ['application/pdf'],
+            'jpg' => ['image/jpeg', 'image/pjpeg'],
+            'jpeg' => ['image/jpeg', 'image/pjpeg'],
+            'png' => ['image/png'],
+            'webp' => ['image/webp'],
+            'doc' => ['application/msword', 'application/vnd.ms-office', 'application/octet-stream'],
+            'docx' => [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/zip',
+                'application/octet-stream'
+            ]
         ];
 
-        if (isset($expectedMimes[$extension]) && $expectedMimes[$extension] !== $mimeType) {
-            $isValid = false;
-            $errors[] = 'Tipe MIME berkas tidak sesuai dengan ekstensi file.';
+        if (isset($expectedMimes[$extension])) {
+            if (!in_array($mimeType, $expectedMimes[$extension])) {
+                $isValid = false;
+                $errors[] = 'Tipe MIME berkas tidak sesuai dengan ekstensi file.';
+            }
         }
 
         // Simpan log upload ke database
@@ -84,8 +92,8 @@ class UploadHelper
 
         $destinationPath = $fullUploadPath . '/' . $randomName;
 
-        // 5. Kompresi Gambar & Penghapusan Metadata EXIF secara otomatis lewat library GD PHP
-        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
+        // 5. Kompresi & Optimasi (Hanya dilakukan jika $optimize bernilai true)
+        if ($optimize && in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
             try {
                 $imgData = file_get_contents($tempPath);
                 $src = @imagecreatefromstring($imgData);
@@ -141,11 +149,20 @@ class UploadHelper
 
             } catch (\Exception $e) {
                 // Fallback jika GD bermasalah
-                move_uploaded_file($tempPath, $destinationPath);
+                $file->move($fullUploadPath, $randomName);
             }
         } else {
-            // PDF atau file lainnya disimpan langsung
-            move_uploaded_file($tempPath, $destinationPath);
+            // Pindahkan file asli terlebih dahulu
+            $file->move($fullUploadPath, $randomName);
+
+            // Jika $optimize bernilai true, coba optimalkan format berkas Word atau PDF
+            if ($optimize) {
+                if ($extension === 'docx') {
+                    self::optimizeDocx($destinationPath);
+                } elseif ($extension === 'pdf') {
+                    self::optimizePdf($destinationPath);
+                }
+            }
         }
 
         return [
@@ -153,5 +170,121 @@ class UploadHelper
             'path' => ($isPublic ? '/' : '') . $relativeDir . '/' . $randomName,
             'filename' => $originalName
         ];
+    }
+
+    /**
+     * Compress images inside a Word DOCX file using GD and ZipArchive.
+     */
+    private static function optimizeDocx($filePath)
+    {
+        if (!class_exists('ZipArchive')) {
+            return;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) === true) {
+            $imagesToOptimize = [];
+            
+            // Loop through zip entries to find images inside word/media/
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $stat = $zip->statIndex($i);
+                $name = $stat['name'];
+                
+                if (strpos($name, 'word/media/') === 0) {
+                    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                    if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                        $imagesToOptimize[] = [
+                            'index' => $i,
+                            'name' => $name,
+                            'ext' => $ext
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($imagesToOptimize)) {
+                foreach ($imagesToOptimize as $img) {
+                    $originalData = $zip->getFromIndex($img['index']);
+                    if (!$originalData) continue;
+
+                    $src = @imagecreatefromstring($originalData);
+                    if (!$src) continue;
+
+                    $width = imagesx($src);
+                    $height = imagesy($src);
+                    $maxDim = 1000;
+
+                    if ($width > $maxDim || $height > $maxDim) {
+                        $ratio = $width / $height;
+                        if ($ratio > 1) {
+                            $newWidth = $maxDim;
+                            $newHeight = round($maxDim / $ratio);
+                        } else {
+                            $newHeight = $maxDim;
+                            $newWidth = round($maxDim * $ratio);
+                        }
+                        $dst = imagecreatetruecolor($newWidth, $newHeight);
+                        
+                        if ($img['ext'] === 'png') {
+                            imagealphablending($dst, false);
+                            imagesavealpha($dst, true);
+                            $transparent = imagecolorallocatealpha($dst, 255, 255, 255, 127);
+                            imagefilledrectangle($dst, 0, 0, $newWidth, $newHeight, $transparent);
+                        }
+
+                        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                        imagedestroy($src);
+                        $src = $dst;
+                    }
+
+                    // Compress image directly to memory
+                    ob_start();
+                    if ($img['ext'] === 'png') {
+                        imagepng($src, null, 6);
+                    } else {
+                        imagejpeg($src, null, 75);
+                    }
+                    $compressedData = ob_get_clean();
+                    imagedestroy($src);
+
+                    if ($compressedData) {
+                        $zip->addFromString($img['name'], $compressedData);
+                    }
+                }
+            }
+
+            $zip->close();
+        }
+    }
+
+    /**
+     * Compress PDF files using Ghostscript if available.
+     */
+    private static function optimizePdf($filePath)
+    {
+        $tempPdf = $filePath . '.temp.pdf';
+        $gsCommands = ['gs', 'gswin64c', 'gswin32c'];
+        
+        foreach ($gsCommands as $gs) {
+            $cmd = "{$gs} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile=" . escapeshellarg($tempPdf) . " " . escapeshellarg($filePath);
+            
+            $output = [];
+            $returnCode = -1;
+            @exec($cmd, $output, $returnCode);
+            
+            if ($returnCode === 0 && file_exists($tempPdf) && filesize($tempPdf) > 0) {
+                if (filesize($tempPdf) < filesize($filePath)) {
+                    @unlink($filePath);
+                    @rename($tempPdf, $filePath);
+                } else {
+                    @unlink($tempPdf);
+                }
+                break;
+            } else {
+                if (file_exists($tempPdf)) {
+                    @unlink($tempPdf);
+                }
+            }
+        }
     }
 }

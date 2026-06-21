@@ -167,20 +167,20 @@
                     <!-- STEP 3: UNGGAH BERKAS -->
                     <div id="step-content-3" class="step-content" style="display: none;">
                         <div class="alert alert-success" style="background-color: var(--primary-light); color: var(--primary-color); border-color: rgba(37,99,235,0.1); margin-bottom: 24px;">
-                            📂 Unggah berkas dokumen pendukung Anda (Fotokopi KTP / Kartu Keluarga). Berkas wajib berupa file gambar (JPG, JPEG, PNG) atau dokumen PDF. Ukuran berkas tidak dibatasi karena sistem akan mengoptimalkan ukurannya secara otomatis.
+                            📂 Unggah berkas dokumen pendukung Anda (Fotokopi KTP / Kartu Keluarga). Berkas wajib berupa file gambar (JPG, JPEG, PNG), dokumen PDF, atau dokumen Word (DOC, DOCX). Ukuran berkas tidak dibatasi karena sistem akan mengoptimalkan ukurannya secara otomatis.
                         </div>
-
+ 
                         <div class="form-group">
                             <label for="berkas_pendukung">Unggah Berkas Pendukung (KTP/KK)</label>
                             <input 
                                 type="file" 
                                 name="berkas_pendukung" 
                                 id="berkas_pendukung" 
-                                accept=".jpg,.jpeg,.png,.pdf" 
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" 
                                 class="form-control" 
                                 required
                             >
-                            <span style="font-size: 11px; color: var(--text-light); margin-top: 4px; display: block;">Format yang diterima: .jpg, .jpeg, .png, .pdf (Ukuran bebas, dioptimalkan otomatis oleh sistem)</span>
+                            <span style="font-size: 11px; color: var(--text-light); margin-top: 4px; display: block;">Format yang diterima: .jpg, .jpeg, .png, .pdf, .doc, .docx (Ukuran bebas, dioptimalkan otomatis oleh sistem)</span>
                         </div>
 
                         <!-- Checkbox Agreement -->
