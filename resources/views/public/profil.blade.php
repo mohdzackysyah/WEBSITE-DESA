@@ -20,8 +20,8 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         </div>
                     @endif
-                    <h3>{{ $nama_kepala ?? 'M. Sani' }}</h3>
-                    <span style="color: var(--primary-color); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-top: 4px;">Kepala Desa {{ \App\Models\Setting::get('nama_desa', 'Desa Penebal') }}</span>
+                    <h3>{{ $kades ? $kades->name : ($nama_kepala ?? 'M. Sani') }}</h3>
+                    <span style="color: var(--primary-color); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-top: 4px;">Kepala {{ \App\Models\Setting::get('nama_desa', 'Desa Penebal') }}</span>
                     
                     <div class="profile-info-mini">
                         <div class="profile-info-row">

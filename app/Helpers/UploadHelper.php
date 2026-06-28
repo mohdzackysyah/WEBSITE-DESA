@@ -29,10 +29,23 @@ class UploadHelper
         $isValid = true;
         $errors = [];
 
-        // 1. Deteksi ekstensi ganda
-        if (substr_count($originalName, '.') > 1) {
-            $isValid = false;
-            $errors[] = 'Deteksi ekstensi ganda yang mencurigakan.';
+        // 1. Deteksi ekstensi ganda mencurigakan (berisi ekstensi eksekusi/scripting di tengah nama file)
+        $parts = explode('.', strtolower($originalName));
+        if (count($parts) > 2) {
+            $dangerousExtensions = [
+                'php', 'phtml', 'php3', 'php4', 'php5', 'phps', 'phar', 
+                'exe', 'pl', 'py', 'sh', 'jsp', 'asp', 'aspx', 'cgi', 
+                'bat', 'cmd', 'js', 'vbs', 'html', 'htm', 'jar'
+            ];
+            // Periksa semua bagian di tengah (kecuali bagian nama awal dan ekstensi akhir)
+            for ($i = 1; $i < count($parts) - 1; $i++) {
+                $middleExt = trim($parts[$i]);
+                if (in_array($middleExt, $dangerousExtensions)) {
+                    $isValid = false;
+                    $errors[] = 'Deteksi ekstensi ganda yang mencurigakan (mengandung ekstensi skrip/eksekusi).';
+                    break;
+                }
+            }
         }
 
         // 2. Validasi ekstensi

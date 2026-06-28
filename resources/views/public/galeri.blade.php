@@ -2,6 +2,49 @@
 
 @section('title', 'Galeri Foto Kegiatan ' . \App\Models\Setting::get('nama_desa', 'Desa Penebal') . ' - Portal Resmi')
 
+@section('styles')
+<style>
+    /* Premium Responsive Auto-fit Grid */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+        gap: 24px !important;
+    }
+
+    /* Filter Buttons wrapping on smaller screens */
+    @media (max-width: 768px) {
+        .gallery-filter {
+            flex-wrap: wrap;
+            gap: 8px !important;
+            margin-bottom: 24px !important;
+            padding: 0 8px;
+        }
+        .filter-btn {
+            padding: 8px 16px !important;
+            font-size: 13px !important;
+            flex-grow: 1;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .gallery-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+        .gallery-image {
+            height: 200px !important; /* Shorter card heights on narrow phones */
+        }
+        .gallery-overlay {
+            padding: 16px !important;
+        }
+        .gallery-overlay h4 {
+            font-size: 14px !important;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
     <section class="section" style="padding-top: 48px; min-height: 70vh;">
         <div class="container">

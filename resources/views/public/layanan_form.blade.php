@@ -33,7 +33,7 @@
                 @endif
 
                 <!-- Master Form -->
-                <form action="{{ route('layanan.form.store', $type) }}" method="POST" enctype="multipart/form-data" id="letterForm">
+                <form action="{{ route('layanan.form.store', $type) }}" method="POST" enctype="multipart/form-data" id="letterForm" data-confirm="Apakah Anda yakin seluruh data yang Anda isi sudah benar dan ingin mengirimkan permohonan surat ini?" data-confirm-title="Kirim Permohonan" data-confirm-type="info">
                     @csrf
 
                     <!-- STEP 1: VALIDASI NIK -->
@@ -181,6 +181,7 @@
                                 required
                             >
                             <span style="font-size: 11px; color: var(--text-light); margin-top: 4px; display: block;">Format yang diterima: .jpg, .jpeg, .png, .pdf, .doc, .docx (Ukuran bebas, dioptimalkan otomatis oleh sistem)</span>
+                            <div id="upload-feedback" style="display: none; margin-top: 12px; font-size: 12px; border-radius: var(--radius-sm);"></div>
                         </div>
 
                         <!-- Checkbox Agreement -->
@@ -242,7 +243,7 @@
 
                     // Autofill alamat jika domisili
                     if (type === 'domisili' && alamatDomisili) {
-                        alamatDomisili.value = `${data.resident.alamat}, RT ${data.resident.rt} RW ${data.resident.rw}, Desa Makmur`;
+                        alamatDomisili.value = `${data.resident.alamat}, RT ${data.resident.rt} RW ${data.resident.rw}, {{ \App\Models\Setting::get('nama_desa', 'Penebal') }}`;
                     }
 
                     btnNext1.disabled = false;
@@ -302,5 +303,102 @@
         currentStep = step;
         window.scrollTo(0, 200);
     }
+
+    // Client-side image compression logic
+    document.getElementById('berkas_pendukung').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const feedback = document.getElementById('upload-feedback');
+        
+        if (!file) {
+            feedback.style.display = 'none';
+            return;
+        }
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
+
+        if (!isImage) {
+            feedback.style.display = 'block';
+            feedback.className = 'alert alert-info';
+            feedback.style.backgroundColor = '#f8fafc';
+            feedback.style.color = '#475569';
+            feedback.style.borderColor = '#e2e8f0';
+            feedback.innerHTML = `📄 Dokumen <strong>${file.name}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB) terdeteksi. Berkas ini akan diunggah asli dan dioptimalkan di sisi server.`;
+            return;
+        }
+
+        // Show visual processing indicator
+        feedback.style.display = 'block';
+        feedback.className = 'alert alert-warning';
+        feedback.style.backgroundColor = '#fffbeb';
+        feedback.style.color = '#b45309';
+        feedback.style.borderColor = '#fef3c7';
+        feedback.innerHTML = `🔄 Sedang mengoptimalkan & mengompresi gambar di browser Anda... Mohon tunggu sebentar.`;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                // Initialize Canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1200; // Match Backend maxDim
+
+                if (width > maxDim || height > maxDim) {
+                    const ratio = width / height;
+                    if (ratio > 1) {
+                        width = maxDim;
+                        height = Math.round(maxDim / ratio);
+                    } else {
+                        height = maxDim;
+                        width = Math.round(maxDim * ratio);
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert canvas to Blob (quality: 80% to match backend)
+                canvas.toBlob(function(blob) {
+                    if (!blob) {
+                        feedback.className = 'alert alert-danger';
+                        feedback.style.backgroundColor = '#fef2f2';
+                        feedback.style.color = '#991b1b';
+                        feedback.style.borderColor = '#fee2e2';
+                        feedback.innerHTML = `⚠️ Gagal mengompresi gambar. Berkas asli akan tetap diunggah.`;
+                        return;
+                    }
+
+                    // Create compressed File object
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+
+                    // Replace files in input
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    e.target.files = dataTransfer.files;
+
+                    // Show success feedback
+                    const origSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    const compSizeKB = (blob.size / 1024).toFixed(0);
+                    const compSizeMB = (blob.size / 1024 / 1024).toFixed(2);
+                    
+                    feedback.className = 'alert alert-success';
+                    feedback.style.backgroundColor = 'var(--primary-light)';
+                    feedback.style.color = 'var(--primary-color)';
+                    feedback.style.borderColor = 'rgba(37,99,235,0.1)';
+                    feedback.innerHTML = `✅ <strong>Berhasil dioptimalkan!</strong> Gambar dikompresi di browser Anda dari <strong>${origSizeMB} MB</strong> menjadi <strong>${compSizeKB} KB</strong> (${compSizeMB} MB) sebelum diunggah. Waktu pengiriman akan menjadi jauh lebih cepat!`;
+                }, 'image/jpeg', 0.8);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
 </script>
 @endsection

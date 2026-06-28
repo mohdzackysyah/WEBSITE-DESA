@@ -137,7 +137,7 @@
 
                                     <!-- Upload Form Block (Hidden Initially) -->
                                     <div id="upload-form-{{ $template->jenis_surat }}" style="display: none; width: 100%; margin-top: 8px; max-width: 320px; padding: 12px; background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 8px;">
-                                        <form action="{{ route('admin.surat.templates.store', $template->jenis_surat) }}" method="POST" enctype="multipart/form-data">
+                                        <form action="{{ route('admin.surat.templates.store', $template->jenis_surat) }}" method="POST" enctype="multipart/form-data" data-confirm="Apakah Anda yakin ingin mengganti berkas template Microsoft Word untuk jenis surat ini? Template lama akan langsung ditimpa dan tindakan ini tidak dapat dibatalkan." data-confirm-title="Ganti Template Surat" data-confirm-type="warning">
                                             @csrf
                                             <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-dark);">Pilih File Baru (.docx)</label>
                                             <input type="file" name="template_file" accept=".docx" required style="font-size: 12px; display: block; width: 100%; margin-bottom: 8px;">

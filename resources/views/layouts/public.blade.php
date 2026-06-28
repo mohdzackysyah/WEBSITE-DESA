@@ -117,7 +117,13 @@
     <footer class="footer">
         <div class="container footer-grid">
             <div class="footer-brand">
-                <h3>{{ \App\Models\Setting::get('nama_desa', 'Desa Penebal') }}</h3>
+                <a href="{{ route('home') }}" style="display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 16px;">
+                    <img src="{{ asset('images/logo-bengkalis.png') }}" alt="Logo Bengkalis" style="height: 44px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">
+                    <div style="display: flex; flex-direction: column; line-height: 1.2; text-align: left;">
+                        <span style="font-size: 16px; font-weight: 800; letter-spacing: 0.5px; color: var(--text-white); font-family: var(--font-heading);">DESA PENEBAL</span>
+                        <span style="font-size: 10px; font-weight: 500; color: #a7f3d0; opacity: 0.85;">Kec. Bengkalis, Kab. Bengkalis</span>
+                    </div>
+                </a>
                 <p>Mewujudkan tata kelola desa yang maju, transparan, dan mandiri melalui inovasi pelayanan publik digital terpadu.</p>
             </div>
             <div>
@@ -157,7 +163,7 @@
             </div>
         </div>
         <div class="container footer-bottom">
-            <p>&copy; {{ date('Y') }} Pemerintah {{ \App\Models\Setting::get('nama_desa', 'Desa Penebal') }}. Hak Cipta Dilindungi Undang-Undang.</p>
+            <p>&copy; {{ date('Y') }} Pemerintah {{ \App\Models\Setting::get('nama_desa', 'Desa Penebal') }}.</p>
         </div>
     </footer>
 
@@ -213,6 +219,7 @@
         });
     </script>
 
+    @include('partials.custom_confirm')
     @yield('scripts')
 </body>
 </html>

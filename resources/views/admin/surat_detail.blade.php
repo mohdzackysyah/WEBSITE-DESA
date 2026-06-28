@@ -16,7 +16,13 @@
             <h1>Pengajuan {{ $surat->nomor_pengajuan }}</h1>
             <p>Tinjau detail data kependudukan dan ubah status pengajuan surat warga.</p>
         </div>
-        <div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            @if(in_array($surat->status, ['menunggu_verifikasi', 'diproses']))
+                <a href="{{ route('admin.surat.edit', $surat->id) }}" class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; background-color: #ffffff; border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; text-decoration: none; border-radius: var(--radius-sm);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    Ubah Data Pengajuan
+                </a>
+            @endif
             <span class="badge badge-{{ $surat->status }}" style="font-size: 14px; padding: 6px 12px;">
                 {{ $surat->status_label }}
             </span>
@@ -159,15 +165,16 @@
                             </a>
 
                             <div style="border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 8px;">
-                                <strong style="font-size: 14px; display: block; margin-bottom: 8px;">Unggah Scan Surat Final</strong>
+                                <strong style="font-size: 14px; display: block; margin-bottom: 8px;">Unggah Scan Surat Final <span style="font-size: 11px; color: var(--text-light); font-weight: normal;">(Opsional)</span></strong>
                                 <p style="font-size: 12px; color: var(--text-light); margin-bottom: 12px;">Cetak draf surat, mintakan tanda tangan Kepala Desa & stempel basah, scan lalu unggah versi finalnya di bawah ini untuk menyelesaikannya.</p>
                                 
-                                <form action="{{ route('admin.surat.status', $surat->id) }}" method="POST" enctype="multipart/form-data">
+                                <form action="{{ route('admin.surat.status', $surat->id) }}" method="POST" enctype="multipart/form-data" data-confirm="Apakah Anda yakin ingin menyelesaikan pengajuan surat ini? Jika Anda mengunggah file PDF final, warga akan dapat langsung mengunduhnya." data-confirm-title="Selesaikan & Publish Surat" data-confirm-type="info">
                                     @csrf
                                     <input type="hidden" name="status" value="selesai">
                                     
                                     <div class="form-group">
-                                        <input type="file" name="dokumen_final" accept=".pdf" class="form-control" required>
+                                        <input type="file" name="dokumen_final" accept=".pdf" class="form-control">
+                                        <span style="font-size: 11px; color: var(--text-light); margin-top: 4px; display: block;">*Kosongkan jika ingin menyelesaikan pengajuan langsung tanpa mengunggah berkas PDF.</span>
                                     </div>
                                     
                                     <div class="form-group">
@@ -197,12 +204,10 @@
                             <h4 style="color: var(--accent-color);">Pengajuan Selesai Diproses</h4>
                             <p style="font-size: 13px; color: var(--text-secondary);">Nomor Surat: <strong>{{ $surat->nomor_surat }}</strong></p>
                             
-                            @if($surat->dokumen_final)
-                                <a href="{{ route('admin.surat.preview-final', $surat->id) }}" target="_blank" class="btn btn-primary" style="width: 100%; background-color: var(--accent-color); display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; border: none; line-height: 1.5;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    Lihat & Cetak Surat Final
-                                </a>
-                            @endif
+                            <a href="{{ route('admin.surat.preview-final', $surat->id) }}" target="_blank" class="btn btn-primary" style="width: 100%; background-color: var(--accent-color); display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; border: none; line-height: 1.5; cursor: pointer;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                {{ $surat->dokumen_final ? 'Lihat & Cetak Surat Final (Scan)' : 'Lihat & Cetak Surat Final (Template)' }}
+                            </a>
                         </div>
 
                     @elseif($surat->status === 'ditolak')

@@ -36,7 +36,7 @@ Route::get('/layanan/check-nik', [SuratRequestController::class, 'checkNik'])->n
 Route::get('/layanan/form/{type}', [SuratRequestController::class, 'showForm'])->name('layanan.form');
 Route::post('/layanan/form/{type}', [SuratRequestController::class, 'store'])->middleware('throttle:6,1')->name('layanan.form.store');
 Route::get('/layanan/download/{id}', [SuratRequestController::class, 'downloadFinal'])->name('layanan.download');
-Route::get('/layanan/preview/{id}', [SuratRequestController::class, 'previewFinal'])->name('layanan.preview');
+Route::get('/layanan/preview/{id}', [SuratRequestController::class, 'previewFinalPublic'])->name('layanan.preview');
 
 // ==========================================
 // AUTENTIKASI OPERATOR
@@ -58,6 +58,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/surat/detail/{id}', [SuratRequestController::class, 'showDetail'])->name('surat.detail');
     Route::get('/surat/attachment/{id}', [SuratRequestController::class, 'downloadAttachment'])->name('surat.attachment');
     Route::post('/surat/status/{id}', [SuratRequestController::class, 'updateStatus'])->name('surat.status');
+    Route::get('/surat/edit/{id}', [SuratRequestController::class, 'edit'])->name('surat.edit');
+    Route::post('/surat/edit/{id}', [SuratRequestController::class, 'update'])->name('surat.update');
     Route::get('/surat/draft/{id}', [SuratRequestController::class, 'generateDraft'])->name('surat.draft');
     Route::get('/surat/preview-draft/{id}', [SuratRequestController::class, 'previewDraft'])->name('surat.preview-draft');
     Route::get('/surat/preview-final/{id}', [SuratRequestController::class, 'previewFinal'])->name('surat.preview-final');

@@ -56,7 +56,7 @@
                                         Edit
                                     </a>
                                     
-                                    <form action="{{ route('admin.content.posts.destroy', $post->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus berita ini?')">
+                                    <form action="{{ route('admin.content.posts.destroy', $post->id) }}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus berita ini?" data-confirm-title="Hapus Berita" data-confirm-type="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">

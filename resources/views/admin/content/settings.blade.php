@@ -21,7 +21,7 @@
     @endif
 
     <div class="form-card">
-        <form action="{{ route('admin.content.settings.update') }}" method="POST">
+        <form action="{{ route('admin.content.settings.update') }}" method="POST" data-confirm="Apakah Anda yakin ingin menyimpan perubahan pengaturan profil dan informasi desa ini?" data-confirm-title="Simpan Pengaturan" data-confirm-type="info">
             @csrf
 
             <!-- 1. IDENTITAS KEPALA DESA -->

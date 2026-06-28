@@ -59,15 +59,19 @@
             <div class="kades-card">
                 <div class="kades-profile">
                     <div class="kades-avatar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        @if($kades && $kades->photo)
+                            <img src="{{ \Illuminate\Support\Str::contains($kades->photo, 'uploads') ? asset($kades->photo) : asset('storage/' . $kades->photo) }}" alt="{{ $kades->name }}">
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        @endif
                     </div>
-                    <h3 class="kades-name">{{ \App\Models\Setting::get('nama_kepala', 'M. Sani') }}</h3>
+                    <h3 class="kades-name">{{ $kades ? $kades->name : \App\Models\Setting::get('nama_kepala', 'M. Sani') }}</h3>
                     <span class="kades-title">Kepala Desa {{ \App\Models\Setting::get('nama_desa', 'Desa Penebal') }}</span>
                 </div>
                 <div>
                     <h2 class="kades-message-title">Sambutan Kepala Desa</h2>
                     <p class="kades-message-text">
-                        "{{ \App\Models\Setting::get('sambutan_kepala') }}"
+                        "{{ \App\Models\Setting::get('sambutan') ?: \App\Models\Setting::get('sambutan_kepala') }}"
                     </p>
                     <a href="{{ route('profil') }}" class="btn btn-secondary btn-sm">Baca Visi & Misi</a>
                 </div>

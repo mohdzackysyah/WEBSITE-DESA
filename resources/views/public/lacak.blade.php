@@ -2,6 +2,61 @@
 
 @section('title', 'Lacak Status Pengajuan Surat - ' . \App\Models\Setting::get('nama_desa', 'Desa Penebal'))
 
+@section('styles')
+<style>
+    .search-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 16px;
+        align-items: flex-end;
+    }
+
+    @media (max-width: 768px) {
+        .search-form-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .search-form-grid .btn {
+            width: 100%;
+            height: 48px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .detail-row {
+            flex-direction: column;
+            gap: 4px;
+            padding: 10px 0;
+        }
+        .detail-label {
+            width: 100%;
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 2px;
+        }
+        .detail-value {
+            font-size: 14.5px;
+            font-weight: 600;
+        }
+        .stepper {
+            gap: 16px !important;
+        }
+        .step-item {
+            gap: 12px !important;
+        }
+        .step-circle {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 14px !important;
+            border-width: 2.5px !important;
+        }
+        .step-label {
+            font-size: 13px !important;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
     <section class="section" style="padding-top: 48px; min-height: 70vh;">
         <div class="container" style="max-width: 800px;">
@@ -12,7 +67,7 @@
 
             <!-- Form Pencarian Lacak -->
             <div class="card" style="margin-bottom: 32px; padding: 24px;">
-                <form action="{{ route('layanan.lacak') }}" method="GET" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: flex-end;">
+                <form action="{{ route('layanan.lacak') }}" method="GET" class="search-form-grid">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="kode_pelacakan">Kode Pelacakan</label>
                         <input 
@@ -139,16 +194,27 @@
                                 @endif
                             </div>
 
-                            <!-- Area Lihat PDF -->
-                            @if($isSelesai && $surat->dokumen_final)
-                                <div style="margin-top: 32px; text-align: center; background-color: #ecfdf5; border: 1px solid #d1fae5; padding: 24px; border-radius: var(--radius-md);">
-                                    <h4 style="color: #065f46; margin-bottom: 8px;">Surat Anda Telah Selesai Dibuat!</h4>
-                                    <p style="font-size: 13px; color: #047857; margin-bottom: 20px;">Silakan lihat dokumen PDF resmi di bawah ini. Anda dapat langsung mencetak atau mengunduh surat tersebut.</p>
-                                    <a href="{{ route('layanan.preview', $surat->id) }}" target="_blank" class="btn btn-primary" style="background-color: #059669; box-shadow: 0 4px 12px rgba(5,150,105,0.2); display: inline-flex; align-items: center; gap: 8px; text-decoration: none; border: none; line-height: 1.5;">
-                                        👁️ Lihat & Cetak Surat PDF Resmi
-                                    </a>
-                                </div>
-                            @elseif($isDiproses)
+                            <!-- Area Lihat PDF / Info Pengambilan -->
+                            @if($isSelesai)
+                                @if($surat->dokumen_final)
+                                    <!-- Jika ada file scan diunggah -->
+                                    <div style="margin-top: 32px; text-align: center; background-color: #ecfdf5; border: 1px solid #d1fae5; padding: 24px; border-radius: var(--radius-md);">
+                                        <h4 style="color: #065f46; margin-bottom: 8px;">Surat Anda Telah Selesai Dibuat!</h4>
+                                        <p style="font-size: 13px; color: #047857; margin-bottom: 20px;">Silakan lihat dokumen PDF resmi di bawah ini. Anda dapat langsung mencetak atau mengunduh surat tersebut.</p>
+                                        <a href="{{ route('layanan.preview', $surat->id) }}" target="_blank" class="btn btn-primary" style="background-color: #059669; box-shadow: 0 4px 12px rgba(5,150,105,0.2); display: inline-flex; align-items: center; gap: 8px; text-decoration: none; border: none; line-height: 1.5; cursor: pointer;">
+                                            👁️ Lihat & Cetak Surat PDF Resmi
+                                        </a>
+                                    </div>
+                                @else
+                                    <!-- Jika tidak ada file scan diunggah (Ambil ke kantor) -->
+                                    <div style="margin-top: 32px; text-align: center; background-color: #ecfdf5; border: 1px solid #d1fae5; padding: 24px; border-radius: var(--radius-md); color: #065f46;">
+                                        <h4 style="margin-bottom: 8px; color: #065f46;">Surat Anda Telah Selesai Diproses!</h4>
+                                        <p style="font-size: 13.5px; line-height: 1.6; margin-bottom: 0; color: #047857;">
+                                            Silakan ambil berkas fisik surat resmi Anda di <strong>Kantor Desa Penebal</strong> pada hari dan jam kerja pelayanan.
+                                        </p>
+                                    </div>
+                                @endif
+                            @elseif($surat->status === 'diproses')
                                 <div style="margin-top: 32px; text-align: center; background-color: #f0f9ff; border: 1px solid #e0f2fe; padding: 24px; border-radius: var(--radius-md); color: #0369a1;">
                                     <h4 style="margin-bottom: 8px;">Surat Sedang Diproses Operator</h4>
                                     <p style="font-size: 13px; margin-bottom: 0;">Dokumen draf surat sedang disiapkan, dicetak, dan diajukan tanda tangan pejabat desa. Halaman ini akan ter-update otomatis jika selesai.</p>

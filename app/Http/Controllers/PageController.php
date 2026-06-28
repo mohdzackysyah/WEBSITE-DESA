@@ -21,13 +21,15 @@ class PageController extends Controller
         $sejarahSingkat = Setting::get('sejarah');
         $sejarahSingkat = $sejarahSingkat ? \Illuminate\Support\Str::words($sejarahSingkat, 40) : '';
         
-        return view('public.home', compact('posts', 'totalPenduduk', 'totalKK', 'totalUMKM', 'sejarahSingkat'));
+        $kades = \App\Models\OrganizationMember::where('level', 1)->first();
+        
+        return view('public.home', compact('posts', 'totalPenduduk', 'totalKK', 'totalUMKM', 'sejarahSingkat', 'kades'));
     }
 
     public function profil()
     {
         $sejarah = Setting::get('sejarah');
-        $sambutan = Setting::get('sambutan');
+        $sambutan = Setting::get('sambutan') ?: Setting::get('sambutan_kepala');
         $nama_kepala = Setting::get('nama_kepala');
         $visi = Setting::get('visi');
         $misi = Setting::get('misi');

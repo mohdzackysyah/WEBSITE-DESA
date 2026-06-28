@@ -160,7 +160,7 @@
         <tr>
             <td class="label">Alamat Asal</td>
             <td class="colon">:</td>
-            <td>{{ $resident ? $resident->alamat : 'Rt 01 Rw 01 Dusun Krajan, Desa Makmur' }}</td>
+            <td>{{ $resident ? $resident->alamat : 'Rt 01 Rw 01 Dusun Krajan, ' . \App\Models\Setting::get('nama_desa', 'Penebal') }}</td>
         </tr>
     </table>
 

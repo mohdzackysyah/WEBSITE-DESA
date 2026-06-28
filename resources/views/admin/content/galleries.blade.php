@@ -69,7 +69,7 @@
                                 <h4 class="admin-gallery-title" title="{{ $g->title }}">{{ $g->title }}</h4>
                                 <span class="admin-gallery-cat">{{ strtoupper($g->category) }}</span>
                                 
-                                <form action="{{ route('admin.content.galleries.destroy', $g->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus foto ini dari galeri?')">
+                                <form action="{{ route('admin.content.galleries.destroy', $g->id) }}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus foto ini dari galeri?" data-confirm-title="Hapus Foto Galeri" data-confirm-type="danger">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm" style="width: 100%; padding: 6px 0; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">

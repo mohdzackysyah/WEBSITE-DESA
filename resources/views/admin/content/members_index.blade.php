@@ -74,7 +74,7 @@
                                         Edit
                                     </a>
                                     
-                                    <form action="{{ route('admin.content.members.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus anggota struktur organisasi ini?')">
+                                    <form action="{{ route('admin.content.members.destroy', $m->id) }}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus anggota struktur organisasi ini?" data-confirm-title="Hapus Anggota Struktur" data-confirm-type="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">

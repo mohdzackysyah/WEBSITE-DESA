@@ -186,8 +186,71 @@ class SuratRequestController extends Controller
     {
         $surat = SuratRequest::findOrFail($id);
 
-        if ($surat->status !== 'selesai' || !$surat->dokumen_final) {
+        if ($surat->status !== 'selesai') {
             abort(403, 'Dokumen surat belum siap.');
+        }
+
+        $jenisSurat = match($surat->jenis_surat) {
+            'domisili' => 'Surat Keterangan Domisili',
+            'sktm' => 'Surat Keterangan Tidak Mampu (SKTM)',
+            'pindah' => 'Surat Pindah Penduduk',
+            default => $surat->jenis_surat
+        };
+
+        // 1. Jika ada dokumen scan final hasil unggahan admin, tampilkan berkas scan tersebut
+        if ($surat->dokumen_final) {
+            $filePath = storage_path('app/private/' . $surat->dokumen_final);
+            if (file_exists($filePath)) {
+                $pdfBase64 = base64_encode(file_get_contents($filePath));
+                return view('pdf_viewer', [
+                    'pdfBase64' => $pdfBase64,
+                    'title' => $jenisSurat . ' — ' . $surat->nomor_surat,
+                ]);
+            }
+        }
+
+        // 2. Jika tidak ada scan dokumen_final, generate PDF dari template dinamis secara otomatis (Bypass PDF scan)
+        $pdfOutput = $this->generatePdfFromWord($surat);
+
+        // Fallback ke HTML template jika gagal atau file .docx tidak ada
+        if ($pdfOutput === null) {
+            $namaDesa = Setting::get('nama_desa', 'Desa Penebal');
+            $kecamatan = Setting::get('kecamatan', 'Kecamatan Bengkalis');
+            $kabupaten = Setting::get('kabupaten', 'Kabupaten Bengkalis');
+            $namaKepala = Setting::get('nama_kepala', 'M. Sani');
+            $resident = Resident::where('nik', $surat->nik)->first();
+
+            $html = view('admin.pdf_template', compact('surat', 'resident', 'namaDesa', 'kecamatan', 'kabupaten', 'namaKepala'))->render();
+
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $pdfOutput = $dompdf->output();
+        }
+
+        $pdfBase64 = base64_encode($pdfOutput);
+
+        return view('pdf_viewer', [
+            'pdfBase64' => $pdfBase64,
+            'title' => $jenisSurat . ' — ' . $surat->nomor_surat,
+        ]);
+    }
+
+    /**
+     * Menampilkan halaman penampil PDF untuk warga (Hanya scan dokumen final, tidak ada template fallback).
+     */
+    public function previewFinalPublic($id)
+    {
+        $surat = SuratRequest::findOrFail($id);
+
+        if ($surat->status !== 'selesai' || !$surat->dokumen_final) {
+            abort(403, 'Dokumen surat belum siap diunduh digital.');
         }
 
         $filePath = storage_path('app/private/' . $surat->dokumen_final);
@@ -264,7 +327,7 @@ class SuratRequestController extends Controller
             'status' => 'required|in:diproses,selesai,ditolak',
             'catatan_operator' => 'nullable|string',
             'alasan_penolakan' => 'required_if:status,ditolak|nullable|string',
-            'dokumen_final' => 'required_if:status,selesai|nullable|file|mimes:pdf',
+            'dokumen_final' => 'nullable|file',
         ]);
 
         $status = $request->status;
@@ -417,6 +480,68 @@ class SuratRequestController extends Controller
             'pdfBase64' => $pdfBase64,
             'title' => 'DRAF — ' . $jenisSurat . ' — ' . ($surat->nomor_surat ?? 'Baru'),
         ]);
+    }
+
+    public function edit($id)
+    {
+        $surat = SuratRequest::findOrFail($id);
+        
+        // Batasi hanya bisa diedit jika statusnya 'menunggu_verifikasi' atau 'diproses'
+        if (!in_array($surat->status, ['menunggu_verifikasi', 'diproses'])) {
+            return redirect()->route('admin.surat.detail', $id)
+                ->with('error', 'Data pengajuan yang sudah selesai atau ditolak tidak dapat diedit kembali.');
+        }
+
+        return view('admin.surat_edit', compact('surat'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $surat = SuratRequest::findOrFail($id);
+
+        if (!in_array($surat->status, ['menunggu_verifikasi', 'diproses'])) {
+            return redirect()->route('admin.surat.detail', $id)
+                ->with('error', 'Data pengajuan yang sudah selesai atau ditolak tidak dapat diedit kembali.');
+        }
+
+        // Validasi dasar
+        $rules = [
+            'nama_lengkap' => 'required|string|max:255',
+            'nik' => 'required|string|size:16',
+            'nomor_surat' => 'nullable|string|max:255',
+        ];
+
+        // Validasi isian dinamis (form_data) sesuai jenis surat
+        if ($surat->jenis_surat === 'domisili') {
+            $rules['form_data.alamat_domisili'] = 'required|string';
+            $rules['form_data.keperluan'] = 'required|string|max:255';
+        } elseif ($surat->jenis_surat === 'sktm') {
+            $rules['form_data.keperluan'] = 'required|string|max:255';
+            $rules['form_data.nama_sekolah_rs'] = 'required|string|max:255';
+            $rules['form_data.penghasilan_orang_tua'] = 'required|numeric|min:0';
+        } elseif ($surat->jenis_surat === 'pindah') {
+            $rules['form_data.alamat_tujuan'] = 'required|string';
+            $rules['form_data.rt_tujuan'] = 'required|string|max:10';
+            $rules['form_data.rw_tujuan'] = 'required|string|max:10';
+            $rules['form_data.dusun_tujuan'] = 'required|string|max:255';
+            $rules['form_data.desa_tujuan'] = 'required|string|max:255';
+            $rules['form_data.kecamatan_tujuan'] = 'required|string|max:255';
+            $rules['form_data.kabupaten_tujuan'] = 'required|string|max:255';
+            $rules['form_data.provinsi_tujuan'] = 'required|string|max:255';
+            $rules['form_data.alasan_pindah'] = 'required|string|max:255';
+        }
+
+        $request->validate($rules);
+
+        // Update database
+        $surat->nama_lengkap = $request->nama_lengkap;
+        $surat->nik = $request->nik;
+        $surat->nomor_surat = $request->nomor_surat;
+        $surat->form_data = $request->form_data;
+        $surat->save();
+
+        return redirect()->route('admin.surat.detail', $id)
+            ->with('success', 'Data pengajuan surat berhasil diperbarui.');
     }
 
     /**

@@ -128,7 +128,7 @@
                                         Edit
                                     </a>
                                     
-                                    <form action="{{ route('admin.content.residents.destroy', $res->nik) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data penduduk {{ $res->nama_lengkap }}? Tindakan ini tidak dapat dibatalkan.')">
+                                    <form action="{{ route('admin.content.residents.destroy', $res->nik) }}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus data penduduk {{ $res->nama_lengkap }}? Tindakan ini tidak dapat dibatalkan." data-confirm-title="Hapus Data Penduduk" data-confirm-type="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm" style="font-size: 12px; padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px;">

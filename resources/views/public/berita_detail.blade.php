@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $post->title . ' - Desa Makmur')
+@section('title', $post->title . ' - ' . \App\Models\Setting::get('nama_desa', 'Penebal'))
 
 @section('content')
     <section class="section" style="padding-top: 48px;">

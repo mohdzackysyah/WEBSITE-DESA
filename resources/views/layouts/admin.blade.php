@@ -127,7 +127,7 @@
             <span class="sidebar-user-role">
                 {{ auth()->user()->role === 'admin' ? 'Administrator' : (auth()->user()->role === 'operator_pelayanan' ? 'Operator Pelayanan' : 'Operator Konten') }}
             </span>
-            <form action="{{ route('logout') }}" method="POST" style="display: block;">
+            <form action="{{ route('logout') }}" method="POST" style="display: block;" data-confirm="Apakah Anda yakin ingin keluar dari panel operator?" data-confirm-title="Keluar Operator" data-confirm-type="warning">
                 @csrf
                 <button type="submit" class="btn-logout" style="background: none; border: none; cursor: pointer; text-align: left; padding: 0; display: inline-flex; align-items: center; gap: 6px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
@@ -149,6 +149,17 @@
         @if(session('error'))
             <div class="alert alert-danger">
                 {{ session('error') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger" style="margin-bottom: 20px;">
+                <strong style="display: block; margin-bottom: 8px;">⚠️ Terjadi kesalahan penginputan:</strong>
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -198,6 +209,7 @@
         });
     </script>
 
+    @include('partials.custom_confirm')
     @yield('scripts')
 </body>
 </html>

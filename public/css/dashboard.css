@@ -29,6 +29,10 @@
     --danger-text: #991b1b;
     --info-bg: #e0f2fe;
     --info-text: #0369a1;
+    
+    --accent-color: #10b981;
+    --accent-hover: #059669;
+    --accent-light: #ecfdf5;
 
     --radius-sm: 8px;
     --radius-md: 12px;

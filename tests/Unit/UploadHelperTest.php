@@ -208,4 +208,35 @@ class UploadHelperTest extends TestCase
         // Clean up
         @unlink($tempFakePdf);
     }
+
+    /**
+     * Test double extension validation rules (allow innocent dots, reject malicious scripting segments)
+     */
+    public function test_double_extension_validation_rules()
+    {
+        // 1. Test innocent dots in filename (like Mohd. Zacky Syah.pdf)
+        $pdfContent = "%PDF-1.4\n%%EOF";
+        $tempInnocent = tempnam(sys_get_temp_dir(), 'test_innocent');
+        file_put_contents($tempInnocent, $pdfContent);
+        
+        $file1 = new UploadedFile($tempInnocent, 'Mohd. Zacky Syah.pdf', 'application/pdf', null, true);
+        $result1 = UploadHelper::processUpload($file1, ['pdf'], false, 'test-double-ext', false);
+        
+        $this->assertTrue($result1['success']);
+        if ($result1['success']) {
+            @unlink(storage_path('app/private/' . $result1['path']));
+        }
+        @unlink($tempInnocent);
+
+        // 2. Test malicious double extension (like shell.php.pdf)
+        $tempMalicious = tempnam(sys_get_temp_dir(), 'test_malicious');
+        file_put_contents($tempMalicious, $pdfContent);
+        
+        $file2 = new UploadedFile($tempMalicious, 'shell.php.pdf', 'application/pdf', null, true);
+        $result2 = UploadHelper::processUpload($file2, ['pdf'], false, 'test-double-ext', false);
+        
+        $this->assertFalse($result2['success']);
+        $this->assertStringContainsString('Deteksi ekstensi ganda', $result2['errors'][0]);
+        @unlink($tempMalicious);
+    }
 }
